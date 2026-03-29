@@ -261,7 +261,10 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--text);m
   <div class="main" id="main">
     <div class="topbar">
       <div class="topbar-title" id="topbar-title">Bonjour 🌷</div>
-      <div class="topbar-date" id="topbar-date"></div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="topbar-date" id="topbar-date"></div>
+        <div style="font-size:13px;font-weight:700;color:var(--accent);" id="topbar-user"></div>
+      </div>
     </div>
     <div class="content">
 
@@ -274,16 +277,14 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--text);m
         </div>
         <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:1rem;">
           <div class="card">
-            <div class="card-title">Agenda du jour</div>
-            <div class="agenda-item"><div class="dot" style="background:#E87C9A"></div><div class="agenda-time">09h00</div><div>Visite assistante sociale — Léa</div></div>
-            <div class="agenda-item"><div class="dot" style="background:#E8923A"></div><div class="agenda-time">14h30</div><div>Rdv médecin — Tom</div></div>
-            <div class="agenda-item"><div class="dot" style="background:#4AADAD"></div><div class="agenda-time">17h00</div><div>Appel famille biologique — Léa</div></div>
+            <div class="card-title" id="agenda-today-title">Agenda du jour</div>
+            <div id="agenda-today-list"></div>
+            <button class="btn-secondary" style="width:100%;margin-top:10px;font-size:13px;" onclick="document.querySelector('.nav-item[data-page=agenda]').click()">+ Ajouter un rendez-vous</button>
           </div>
           <div class="card">
             <div class="card-title">À faire rapidement</div>
-            <div class="agenda-item"><div class="dot" style="background:#E8923A"></div><div style="font-size:13px;font-weight:700;color:#000;">Bilan trimestriel Tom</div></div>
-            <div class="agenda-item"><div class="dot" style="background:#E87C9A"></div><div style="font-size:13px;font-weight:700;color:#000;">Questionnaire Léa</div></div>
-            <div class="agenda-item"><div class="dot" style="background:#9B7FD4"></div><div style="font-size:13px;font-weight:700;color:#000;">Renouveler agrément ASE</div></div>
+            <div id="todo-list"></div>
+            <button class="btn-secondary" style="width:100%;margin-top:10px;font-size:13px;" onclick="openAddTodo()">+ Ajouter une tâche</button>
           </div>
         </div>
       </div>
@@ -338,10 +339,8 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--text);m
           </div>
           <div class="card">
             <div class="card-title">Rendez-vous du mois</div>
-            <div class="rdv-item"><div class="rdv-color" style="background:#E87C9A"></div><div><div class="rdv-title">Visite AS — Léa</div><div class="rdv-sub">29 mars · 09h00</div></div></div>
-            <div class="rdv-item"><div class="rdv-color" style="background:#E8923A"></div><div><div class="rdv-title">Rdv médecin — Tom</div><div class="rdv-sub">29 mars · 14h30</div></div></div>
-            <div class="rdv-item"><div class="rdv-color" style="background:#4AADAD"></div><div><div class="rdv-title">Appel famille — Léa</div><div class="rdv-sub">29 mars · 17h00</div></div></div>
-            <button class="btn-primary" style="margin-top:1rem;width:100%;">+ Ajouter un rendez-vous</button>
+            <div id="rdv-list-page"><div style="text-align:center;padding:1.5rem;color:#aaa;font-size:13px;">Aucun rendez-vous. Ajoutez-en un !</div></div>
+            <button class="btn-primary" style="margin-top:1rem;width:100%;" onclick="document.getElementById('add-rdv-modal').classList.add('show')">+ Ajouter un rendez-vous</button>
           </div>
         </div>
       </div>
@@ -419,9 +418,7 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--text);m
         <div class="card">
           <div class="card-title">Documents récents</div>
           <div class="file-grid" id="file-grid">
-            <div class="file-card"><div class="file-icon">📄</div><div class="file-name">Ordonnance Tom — mars 2026</div><div class="file-actions"><button class="file-btn">👁️ Voir</button><button class="file-btn" onclick="window.print()">🖨️ Imprimer</button></div></div>
-            <div class="file-card"><div class="file-icon">📋</div><div class="file-name">Contrat accueil — Léa</div><div class="file-actions"><button class="file-btn">👁️ Voir</button><button class="file-btn" onclick="window.print()">🖨️ Imprimer</button></div></div>
-            <div class="file-card"><div class="file-icon">🏥</div><div class="file-name">Carnet santé — Noah</div><div class="file-actions"><button class="file-btn">👁️ Voir</button><button class="file-btn" onclick="window.print()">🖨️ Imprimer</button></div></div>
+
           </div>
         </div>
       </div>
@@ -528,9 +525,22 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--text);m
 </div>
 
 <script>
-// ══ SÉCURITÉ — SHA-256 du mot de passe "maman:2503" ══
-// Le vrai mot de passe n'apparaît jamais en clair dans le code
-const VALID_HASH = "d2fc40d14e1264bdb56e84db1a9e4476c8e4fc63a4f8b8a39b0ec10f3c5cccf9";
+// ══ COMPTES — hashes SHA-256 (mots de passe jamais en clair) ══
+const ACCOUNTS = {
+  'maman':   { hash: 'cd1049fbedcaa7e5bf3d8152ddc65a81de0b32e1a007f43063ac4b5db9bdb6a9', role: 'user',  displayName: 'Maman 🌷' },
+  'lapomme': { hash: '510d4487d3fba875d328d5340ffe63db1dec522d5c5acdcf0ee55c892017e191', role: 'admin', displayName: 'Admin 🛠️' }
+};
+// maman → 2503   |   lapomme → 751
+
+let currentUser = null;
+let adminLog = JSON.parse(localStorage.getItem('fa_adminlog') || '[]');
+
+function logAction(action) {
+  const entry = { time: new Date().toLocaleString('fr-FR'), action };
+  adminLog.unshift(entry);
+  if (adminLog.length > 100) adminLog = adminLog.slice(0, 100);
+  localStorage.setItem('fa_adminlog', JSON.stringify(adminLog));
+}
 
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -542,28 +552,34 @@ let attempts = 0, lockUntil = 0;
 async function doLogin() {
   const now = Date.now();
   if (now < lockUntil) {
-    const s = Math.ceil((lockUntil-now)/1000);
-    showErr(`Compte bloqué. Réessayez dans ${s} secondes.`);
+    showErr(`Compte bloqué. Réessayez dans ${Math.ceil((lockUntil-now)/1000)} secondes.`);
     return;
   }
   const user = document.getElementById('login-user').value.trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
   const hash = await sha256(user+':'+pass);
+  const account = ACCOUNTS[user];
 
-  if (hash === VALID_HASH) {
+  if (account && hash === account.hash) {
     attempts = 0;
-    sessionStorage.setItem('fa_ok','1');
+    currentUser = { username: user, ...account };
+    sessionStorage.setItem('fa_session', JSON.stringify(currentUser));
+    logAction(`Connexion : ${user}`);
     document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='flex';
-    initApp();
+    if (account.role === 'admin') {
+      document.getElementById('admin-panel').style.display='flex';
+      renderAdminLog();
+    } else {
+      document.getElementById('app').style.display='flex';
+      initApp();
+    }
   } else {
     attempts++;
-    const left = 5 - attempts;
     if (attempts >= 5) {
       lockUntil = Date.now()+60000; attempts=0;
       showErr('Trop de tentatives. Compte bloqué 60 secondes.');
     } else {
-      showErr(`Identifiant ou mot de passe incorrect. ${left} tentative(s) restante(s).`);
+      showErr(`Identifiant ou mot de passe incorrect. ${5-attempts} tentative(s) restante(s).`);
     }
     document.getElementById('login-pass').value='';
   }
@@ -575,28 +591,162 @@ function showErr(msg) {
 }
 
 function doLogout() {
-  sessionStorage.removeItem('fa_ok');
+  sessionStorage.removeItem('fa_session');
+  currentUser = null;
   location.reload();
 }
 
+// ── ADMIN PANEL ──
+function adminTab(name, btn) {
+  ['activite','infos','pranks'].forEach(t => {
+    document.getElementById('admin-tab-'+t).style.display = t===name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.admin-tab').forEach(b => {
+    b.style.color = '#666'; b.style.borderBottomColor = 'transparent';
+  });
+  btn.style.color = '#E8923A'; btn.style.borderBottomColor = '#E8923A';
+  if(name==='infos') updateAdminInfos();
+  if(name==='pranks') renderActivePranks();
+}
+
+function renderAdminLog() {
+  const log = JSON.parse(localStorage.getItem('fa_adminlog') || '[]');
+  const tbody = document.getElementById('admin-log-body');
+  if (!tbody) return;
+  if (!log.length) {
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:#444;padding:2rem;font-size:13px;">Aucune activite encore.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = log.map(e =>
+    '<tr style="border-bottom:1px solid #1f1f28;">' +
+    '<td style="padding:8px 14px;color:#555;font-size:12px;white-space:nowrap;">' + e.time + '</td>' +
+    '<td style="padding:8px 14px;font-size:13px;color:#ccc;">' + esc(e.action) + '</td>' +
+    '</tr>'
+  ).join('');
+}
+
+function updateAdminInfos() {
+  const ch = JSON.parse(localStorage.getItem('fa_children') || '[]');
+  const rdv = JSON.parse(localStorage.getItem('fa_rdv') || '[]');
+  const td = JSON.parse(localStorage.getItem('fa_todos') || '[]');
+  const gmail = localStorage.getItem('fa_gmail') || 'Non configure';
+  const el = id => document.getElementById(id);
+  if(el('admin-gmail')) el('admin-gmail').textContent = gmail;
+  if(el('admin-children')) el('admin-children').textContent = ch.length ? ch.map(c=>c.prenom+(c.age?' ('+c.age+' ans)':'')).join(', ') : 'Aucun';
+  if(el('admin-rdv')) el('admin-rdv').textContent = rdv.length + ' rendez-vous';
+  if(el('admin-todos')) el('admin-todos').textContent = td.length + ' tache(s)';
+}
+
+function clearAdminLog() {
+  if (!confirm('Effacer tout l\u2019historique ?')) return;
+  localStorage.removeItem('fa_adminlog');
+  adminLog = [];
+  renderAdminLog();
+}
+
+function activatePrank(type) {
+  const pranks = JSON.parse(localStorage.getItem('fa_pranks') || '[]');
+  if (type === 'title') {
+    const val = document.getElementById('prank-title-input').value.trim();
+    if (!val) { alert('Entre un titre !'); return; }
+    pranks.push({ type:'title', value: val });
+    document.getElementById('prank-title-input').value = '';
+  } else if (type === 'msg') {
+    const val = document.getElementById('prank-msg-input').value.trim();
+    if (!val) { alert('Entre un message !'); return; }
+    pranks.push({ type:'msg', value: val });
+    document.getElementById('prank-msg-input').value = '';
+  } else if (type === 'rdv') {
+    const val = document.getElementById('prank-rdv-input').value.trim();
+    if (!val) { alert('Entre un titre !'); return; }
+    const today = new Date().toISOString().slice(0,10);
+    pranks.push({ type:'rdv', value: val, date: today });
+    document.getElementById('prank-rdv-input').value = '';
+  } else if (type === 'email') {
+    const from = document.getElementById('prank-email-from').value.trim();
+    const subj = document.getElementById('prank-email-subj').value.trim();
+    if (!from||!subj) { alert('Remplis les deux champs !'); return; }
+    pranks.push({ type:'email', from, subj, body: 'Tu as recu un message surprise !\uD83D\uDE09' });
+    document.getElementById('prank-email-from').value = '';
+    document.getElementById('prank-email-subj').value = '';
+  }
+  localStorage.setItem('fa_pranks', JSON.stringify(pranks));
+  renderActivePranks();
+  alert('\u2705 Prank active ! Maman le verra a sa prochaine connexion.');
+}
+
+function renderActivePranks() {
+  const pranks = JSON.parse(localStorage.getItem('fa_pranks') || '[]');
+  const el = document.getElementById('pranks-active-list');
+  if (!el) return;
+  if (!pranks.length) { el.textContent = 'Aucun prank actif.'; return; }
+  const labels = {title:'Titre', msg:'Message IA', rdv:'Rendez-vous', email:'Email'};
+  el.innerHTML = pranks.map(p => {
+    const desc = p.value || (p.from + ' - ' + p.subj);
+    return '<div style="padding:6px 0;border-bottom:1px solid #2a2a35;display:flex;align-items:center;gap:8px;">' +
+      '<span style="background:#2a2a35;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#E8923A;">' + (labels[p.type]||p.type) + '</span>' +
+      '<span style="flex:1;font-size:13px;color:#ccc;">' + esc(desc) + '</span></div>';
+  }).join('');
+}
+
+function clearPranks() {
+  if (!confirm('Annuler tous les pranks ?')) return;
+  localStorage.removeItem('fa_pranks');
+  renderActivePranks();
+}
+
+function applyPranks() {
+  const pranks = JSON.parse(localStorage.getItem('fa_pranks') || '[]');
+  if (!pranks.length) return;
+  pranks.forEach(p => {
+    if (p.type === 'title') {
+      const el = document.getElementById('topbar-title');
+      if (el) el.textContent = p.value;
+    } else if (p.type === 'msg') {
+      setTimeout(() => {
+        if (!aiOpen) toggleAI();
+        addMsg('\uD83E\uDD16 <strong>Message surprise :</strong><br>' + esc(p.value), 'bot');
+      }, 1800);
+    } else if (p.type === 'rdv') {
+      const parts = p.value.split(' - ');
+      rdvList.push({ id:'prank'+Date.now(), titre: parts[0].trim(), date: p.date||new Date().toISOString().slice(0,10), time: (parts[1]||'12:00').trim() });
+      saveRdv(); renderRdv();
+    } else if (p.type === 'email') {
+      emails.unshift({ from: p.from, subj: p.subj, body: p.body, time: 'Maintenant', unread: true });
+      renderEmailList();
+    }
+  });
+  localStorage.removeItem('fa_pranks');
+}
 // ── INIT ──
 function initApp() {
   const d = new Date();
   document.getElementById('topbar-date').textContent =
     d.toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   loadChildren();
+  renderRdv();
+  renderTodos();
   const g = localStorage.getItem('fa_gmail');
   if (g) {
     document.getElementById('gmail-addr-display').textContent = g;
     document.getElementById('gmail-address').value = g;
   }
+  if (currentUser) document.getElementById('topbar-user').textContent = currentUser.displayName;
+  applyPranks();
 }
 
 window.addEventListener('load',()=>{
-  if(sessionStorage.getItem('fa_ok')==='1'){
+  const s = sessionStorage.getItem('fa_session');
+  if (s) {
+    currentUser = JSON.parse(s);
     document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='flex';
-    initApp();
+    if (currentUser.role === 'admin') {
+      document.getElementById('admin-panel').style.display='flex';
+      renderAdminLog();
+    } else {
+      document.getElementById('app').style.display='flex';
+      initApp();
+    }
   }
 });
 
@@ -609,6 +759,7 @@ function showPage(name,el){
   const t={accueil:'Bonjour 🌷',emails:'Emails',agenda:'Agenda',
     enfants:'Mes enfants accueillis',questionnaires:'Questionnaires',scanner:'Documents'};
   document.getElementById('topbar-title').textContent=t[name]||name;
+  logAction(`Page visitée : ${t[name]||name}`);
 }
 
 // ── ENFANTS ──
@@ -631,7 +782,7 @@ function renderChildren(){
   document.getElementById('stat-enfants').textContent=children.length;
   const list=document.getElementById('children-list');
   if(!children.length){
-    list.innerHTML='<div style="text-align:center;padding:2rem;color:#888;font-size:14px;">Aucun enfant ajouté.<br>Cliquez sur "Ajouter un enfant" pour commencer.</div>';
+    list.innerHTML="<div style=\"text-align:center;padding:2rem;color:#888;font-size:14px;\">Aucun enfant enregistre.<br>Cliquez sur Ajouter un enfant.</div>";
     return;
   }
   list.innerHTML=children.map((c,i)=>`
@@ -661,6 +812,87 @@ function removeChild(i){
   if(!confirm('Retirer '+children[i].prenom+' ?')) return;
   children.splice(i,1); saveChildren(); renderChildren();
 }
+
+// ── AGENDA (rendez-vous) ──
+let rdvList = JSON.parse(localStorage.getItem('fa_rdv')||'[]');
+const RDV_COLORS = ['#E87C9A','#E8923A','#4AADAD','#9B7FD4','#5B9BD5','#E8C13A'];
+function saveRdv(){ localStorage.setItem('fa_rdv', JSON.stringify(rdvList)); }
+function renderRdv(){
+  const today = new Date().toISOString().slice(0,10);
+  const todayItems = rdvList.filter(r=>r.date===today).sort((a,b)=>a.time.localeCompare(b.time));
+  const allItems = [...rdvList].sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+  const todayList = document.getElementById('agenda-today-list');
+  if(todayList){
+    if(!todayItems.length){
+      todayList.innerHTML="<div style='text-align:center;padding:1.2rem;color:#aaa;font-size:13px;'>Aucun rendez-vous ce jour.</div>";
+    } else {
+      todayList.innerHTML=todayItems.map((r,i)=>`
+        <div class="agenda-item">
+          <div class="dot" style="background:${RDV_COLORS[i%RDV_COLORS.length]}"></div>
+          <div class="agenda-time">${r.time}</div>
+          <div style="flex:1;">${esc(r.titre)}</div>
+          <button onclick="deleteRdv('${r.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;">✕</button>
+        </div>`).join('');
+    }
+  }
+  const rdvPage = document.getElementById('rdv-list-page');
+  if(rdvPage){
+    if(!allItems.length){
+      rdvPage.innerHTML="<div style='text-align:center;padding:1.5rem;color:#aaa;font-size:13px;'>Aucun rendez-vous. Ajoutez-en un !</div>";
+    } else {
+      rdvPage.innerHTML=allItems.map(r=>`
+        <div class="rdv-item">
+          <div class="rdv-color" style="background:${RDV_COLORS[rdvList.indexOf(r)%RDV_COLORS.length]}"></div>
+          <div style="flex:1;">
+            <div class="rdv-title">${esc(r.titre)}</div>
+            <div class="rdv-sub">${new Date(r.date+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})} · ${r.time}</div>
+          </div>
+          <button onclick="deleteRdv('${r.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;">✕</button>
+        </div>`).join('');
+    }
+  }
+}
+function addRdv(){
+  const titre=document.getElementById('rdv-titre').value.trim();
+  const date=document.getElementById('rdv-date').value;
+  const time=document.getElementById('rdv-time').value;
+  if(!titre||!date||!time){alert('Veuillez remplir tous les champs.');return;}
+  rdvList.push({id:Date.now().toString(),titre,date,time});
+  saveRdv(); renderRdv();
+  document.getElementById('add-rdv-modal').classList.remove('show');
+  ['rdv-titre','rdv-date','rdv-time'].forEach(id=>document.getElementById(id).value='');
+  logAction('Rendez-vous ajouté : '+titre+' le '+date+' à '+time);
+}
+function deleteRdv(id){
+  rdvList=rdvList.filter(r=>r.id!==id);
+  saveRdv(); renderRdv();
+}
+
+// ── TÂCHES À FAIRE ──
+let todos=JSON.parse(localStorage.getItem('fa_todos')||'[]');
+const TODO_COLORS=['#E8923A','#E87C9A','#9B7FD4','#4AADAD','#5B9BD5'];
+function saveTodos(){localStorage.setItem('fa_todos',JSON.stringify(todos));}
+function renderTodos(){
+  const list=document.getElementById('todo-list');
+  if(!list) return;
+  if(!todos.length){
+    list.innerHTML="<div style='text-align:center;padding:1.2rem;color:#aaa;font-size:13px;'>Aucune tache. Tout est a jour !</div>";
+    return;
+  }
+  list.innerHTML=todos.map((t,i)=>`
+    <div class="agenda-item">
+      <div class="dot" style="background:${TODO_COLORS[i%TODO_COLORS.length]}"></div>
+      <div style="flex:1;font-size:13px;font-weight:700;color:#000;">${esc(t.texte)}</div>
+      <button onclick="deleteTodo(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:14px;font-weight:700;" title="Marquer fait">✓</button>
+    </div>`).join('');
+}
+function openAddTodo(){
+  const texte=prompt('Quelle tâche voulez-vous ajouter ?');
+  if(!texte||!texte.trim()) return;
+  todos.push({texte:texte.trim()});
+  saveTodos(); renderTodos();
+}
+function deleteTodo(i){todos.splice(i,1);saveTodos();renderTodos();}
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
@@ -703,8 +935,25 @@ const emails=[
 
 let currentEmail=null;
 
+function renderEmailList() {
+  const list = document.getElementById('email-list');
+  if (!list) return;
+  list.innerHTML = emails.map((e,i) =>
+    '<div class="email-item' + (e.unread?' unread':'') + '" onclick="openEmail(' + i + ')">' +
+    '<div class="av av-blue">' + esc(e.from.substring(0,2).toUpperCase()) + '</div>' +
+    '<div style="flex:1;min-width:0;">' +
+    '<div class="email-from">' + esc(e.from) + '</div>' +
+    '<div class="email-subj">' + esc(e.subj) + '</div>' +
+    '</div>' +
+    '<div class="email-time">' + e.time + '</div>' +
+    (e.unread ? '<div class="unread-dot"></div>' : '') +
+    '</div>'
+  ).join('');
+}
+
 function openEmail(id){
   currentEmail=id;
+  logAction(`Email ouvert : "${emails[id].subj.substring(0,50)}"`);
   const e=emails[id];
   document.getElementById('email-list').style.display='none';
   const r=document.getElementById('email-reader');
@@ -747,7 +996,7 @@ function searchEmails(q){
 }
 
 // ── QUESTIONNAIRES ──
-function openQ(n){document.getElementById('q-list').style.display='none';document.getElementById('q-form-'+n).classList.add('show');}
+function openQ(n){logAction(`Questionnaire ouvert : ${n}`);document.getElementById('q-list').style.display='none';document.getElementById('q-form-'+n).classList.add('show');}
 function closeQ(){document.getElementById('q-list').style.display='block';document.querySelectorAll('.q-form-wrap').forEach(f=>f.classList.remove('show'));}
 
 // ── SCANNER ──
@@ -868,5 +1117,133 @@ Sois concise, chaleureuse, et toujours utile.`;
   }
 }
 </script>
+<!-- ══ ADD RDV MODAL ══ -->
+<div class="modal-overlay" id="add-rdv-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <div class="modal-title">📅 Nouveau rendez-vous</div>
+    <input class="modal-field" id="rdv-titre" placeholder="Titre (ex: Visite AS, Rdv médecin…)">
+    <input class="modal-field" id="rdv-date" type="date">
+    <input class="modal-field" id="rdv-time" type="time">
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="document.getElementById('add-rdv-modal').classList.remove('show')">Annuler</button>
+      <button class="btn-primary" onclick="addRdv()">✅ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN PANEL ══ -->
+<div id="admin-panel" style="display:none;position:fixed;inset:0;background:#0f0f12;z-index:500;flex-direction:column;font-family:'Nunito',sans-serif;color:#fff;">
+
+  <!-- topbar -->
+  <div style="background:#1a1a1f;border-bottom:1px solid #2a2a35;padding:1rem 2rem;display:flex;align-items:center;gap:12px;flex-shrink:0;">
+    <span style="font-size:22px;">🍎</span>
+    <div>
+      <div style="font-family:'Lora',serif;font-size:17px;font-weight:600;">Panneau Secret — LaPomme</div>
+      <div style="font-size:11px;color:#666;margin-top:1px;">Mode administrateur actif</div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button onclick="renderAdminLog()" style="background:#2a2a35;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;">🔄 Actualiser</button>
+      <button onclick="doLogout()" style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">🚪 Déconnexion</button>
+    </div>
+  </div>
+
+  <!-- tabs -->
+  <div style="display:flex;gap:0;border-bottom:1px solid #2a2a35;flex-shrink:0;background:#1a1a1f;">
+    <button class="admin-tab active" onclick="adminTab('activite',this)" style="padding:12px 22px;background:none;border:none;border-bottom:2px solid #E8923A;color:#E8923A;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">👁️ Activité</button>
+    <button class="admin-tab" onclick="adminTab('infos',this)" style="padding:12px 22px;background:none;border:none;border-bottom:2px solid transparent;color:#666;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">📋 Infos</button>
+    <button class="admin-tab" onclick="adminTab('pranks',this)" style="padding:12px 22px;background:none;border:none;border-bottom:2px solid transparent;color:#666;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">😈 Pranks</button>
+  </div>
+
+  <!-- content -->
+  <div style="flex:1;overflow-y:auto;padding:1.5rem 2rem;max-width:960px;margin:0 auto;width:100%;">
+
+    <!-- ACTIVITE -->
+    <div id="admin-tab-activite">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+        <div style="font-size:13px;font-weight:700;color:#aaa;flex:1;">Toutes les actions de Maman sur l’application</div>
+        <button onclick="clearAdminLog()" style="font-size:12px;padding:5px 12px;border:1px solid #c0392b;border-radius:8px;background:transparent;cursor:pointer;font-family:'Nunito',sans-serif;color:#c0392b;font-weight:700;">🗑️ Effacer</button>
+      </div>
+      <div style="background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;" id="admin-log-table">
+          <thead>
+            <tr style="border-bottom:1px solid #2a2a35;">
+              <th style="text-align:left;font-size:11px;font-weight:700;color:#555;padding:10px 14px;text-transform:uppercase;white-space:nowrap;">Heure</th>
+              <th style="text-align:left;font-size:11px;font-weight:700;color:#555;padding:10px 14px;text-transform:uppercase;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="admin-log-body">
+            <tr><td colspan="2" style="text-align:center;color:#444;padding:2rem;font-size:13px;">Aucune activité encore.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INFOS -->
+    <div id="admin-tab-infos" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+        <div style="background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Email de maman</div>
+          <div style="font-size:15px;font-weight:700;color:#E8923A;" id="admin-gmail">Non configuré</div>
+        </div>
+        <div style="background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Enfants enregistrés</div>
+          <div style="font-size:14px;font-weight:600;color:#fff;" id="admin-children">Aucun</div>
+        </div>
+        <div style="background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Rendez-vous enregistrés</div>
+          <div style="font-size:14px;font-weight:600;color:#fff;" id="admin-rdv">0</div>
+        </div>
+        <div style="background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Tâches à faire</div>
+          <div style="font-size:14px;font-weight:600;color:#fff;" id="admin-todos">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRANKS -->
+    <div id="admin-tab-pranks" style="display:none;">
+      <div style="color:#aaa;font-size:13px;margin-bottom:1.2rem;">Ces pranks se déclenchent la prochaine fois que maman se connecte. 😈</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
+        <div style="background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px;">🔠 Changer le titre</div>
+          <div style="font-size:12px;color:#666;margin-bottom:12px;">Change le nom affiché dans le header</div>
+          <input id="prank-title-input" placeholder="ex: Site des espions 🕵️" style="width:100%;background:#0f0f12;border:1px solid #2a2a35;border-radius:8px;padding:8px 10px;font-family:'Nunito',sans-serif;font-size:13px;color:#fff;outline:none;margin-bottom:8px;">
+          <button onclick="activatePrank('title')" style="width:100%;background:#E8923A;color:#fff;border:none;border-radius:8px;padding:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Activer</button>
+        </div>
+
+        <div style="background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px;">💬 Faux message IA</div>
+          <div style="font-size:12px;color:#666;margin-bottom:12px;">L’IA dit un message surprise au démarrage</div>
+          <input id="prank-msg-input" placeholder="ex: Bonjour, je suis ton fils 👀" style="width:100%;background:#0f0f12;border:1px solid #2a2a35;border-radius:8px;padding:8px 10px;font-family:'Nunito',sans-serif;font-size:13px;color:#fff;outline:none;margin-bottom:8px;">
+          <button onclick="activatePrank('msg')" style="width:100%;background:#9B7FD4;color:#fff;border:none;border-radius:8px;padding:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Activer</button>
+        </div>
+
+        <div style="background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px;">📅 Faux rendez-vous</div>
+          <div style="font-size:12px;color:#666;margin-bottom:12px;">Ajoute un rendez-vous inventé dans l’agenda</div>
+          <input id="prank-rdv-input" placeholder="ex: Réunion avec les aliens 👽 — 20h00" style="width:100%;background:#0f0f12;border:1px solid #2a2a35;border-radius:8px;padding:8px 10px;font-family:'Nunito',sans-serif;font-size:13px;color:#fff;outline:none;margin-bottom:8px;">
+          <button onclick="activatePrank('rdv')" style="width:100%;background:#4AADAD;color:#fff;border:none;border-radius:8px;padding:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Activer</button>
+        </div>
+
+        <div style="background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;padding:1.2rem;">
+          <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:6px;">✉️ Faux email</div>
+          <div style="font-size:12px;color:#666;margin-bottom:12px;">Ajoute un faux email non lu dans la liste</div>
+          <input id="prank-email-from" placeholder="Expéditeur — ex: Le Père Noël 🎅" style="width:100%;background:#0f0f12;border:1px solid #2a2a35;border-radius:8px;padding:8px 10px;font-family:'Nunito',sans-serif;font-size:13px;color:#fff;outline:none;margin-bottom:6px;">
+          <input id="prank-email-subj" placeholder="Objet — ex: Cadeau pour toi !" style="width:100%;background:#0f0f12;border:1px solid #2a2a35;border-radius:8px;padding:8px 10px;font-family:'Nunito',sans-serif;font-size:13px;color:#fff;outline:none;margin-bottom:8px;">
+          <button onclick="activatePrank('email')" style="width:100%;background:#E87C9A;color:#fff;border:none;border-radius:8px;padding:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Activer</button>
+        </div>
+
+      </div>
+      <div style="margin-top:1.2rem;padding:1rem;background:#1a1a1f;border:1px solid #2a2a35;border-radius:12px;">
+        <div style="font-size:13px;font-weight:700;color:#aaa;margin-bottom:8px;">Pranks actifs en attente :</div>
+        <div id="pranks-active-list" style="font-size:13px;color:#555;">Aucun prank actif.</div>
+        <button onclick="clearPranks()" style="margin-top:10px;background:transparent;border:1px solid #c0392b;color:#c0392b;border-radius:8px;padding:6px 14px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🗑️ Annuler tous les pranks</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>
